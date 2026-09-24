@@ -223,7 +223,6 @@
             </h1>
           </div>
 
-          <!-- Sisi Kanan: Mesin Slot Silinder Emas 3D -->
           <div class="shrink-0 relative flex items-center justify-center pr-10 sm:pr-12 z-10">
             
             <div id="slotHousing" class="relative bg-gradient-to-b from-[#FFF5C0] via-[#DDA835] via-50% to-[#785307] p-2 sm:p-2.5 pb-2.5 sm:pb-3 rounded-[24px] sm:rounded-[28px] shadow-[0_12px_24px_rgba(0,0,0,0.3),inset_0_3px_5px_rgba(255,255,255,0.95),inset_0_-3px_5px_rgba(80,50,5,0.6)] border-2 border-[#FFE885] w-[172px] sm:w-[188px] transition-all duration-300 overflow-visible">
@@ -240,14 +239,6 @@
                         <feMerge>
                           <feMergeNode in="blur2" />
                           <feMergeNode in="blur1" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
-
-                      <filter id="amberNeonGlow" x="-30%" y="-30%" width="160%" height="160%">
-                        <feGaussianBlur stdDeviation="4.5" result="blur" />
-                        <feMerge>
-                          <feMergeNode in="blur" />
                           <feMergeNode in="SourceGraphic" />
                         </feMerge>
                       </filter>
@@ -1555,19 +1546,14 @@
           rawEmail = `${rawEmail}@zentoracore.com`;
         }
 
-        // Validasi format email umum yang fleksibel (menerima email kantor, Gmail, Yahoo, dll)
+        // Validasi format email umum
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(rawEmail)) {
           showToast('Email Tidak Valid', 'Format alamat email tidak valid.', true);
           return;
         }
 
-        // Cek duplikasi email pendaftar
-        const isExist = participants.some(p => p.email.toLowerCase() === rawEmail);
-        if (isExist) {
-          showToast('Email Terdaftar', `Email ${rawEmail} sudah pernah digunakan untuk mendaftar.`, true);
-          return;
-        }
+        // Catatan: Pengecekan duplikasi email dilepas agar bisa mendaftar berkali-kali
 
         if (submitBtn) {
           submitBtn.disabled = true;
