@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Door Prize & Lucky Draw Portal - Zentora Core</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- EmailJS SDK Browser v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <script>
+    function applySystemTheme() {
+      const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    applySystemTheme();
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applySystemTheme);
+    }
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            neonGold: '#FACC15',
+            neonAmber: '#F59E0B',
+            neonOrange: '#FB923C',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F8FAFC;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    @media (prefers-color-scheme: dark) {
+      ::-webkit-scrollbar-track { background: #0F172A; }
+      ::-webkit-scrollbar-thumb { background: #334155; }
+      ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    }
+
+    /* Slot Machine Lever Pull Animation */
+    @keyframes leverPull {
+      0% { transform: translateY(0) scaleY(1) scaleX(1); }
+      38% { transform: translateY(8px) scaleY(0.28) scaleX(1.12); }
+      52% { transform: translateY(10px) scaleY(0.24) scaleX(1.14); }
+      76% { transform: translateY(-2px) scaleY(1.05) scaleX(0.98); }
+      100% { transform: translateY(0) scaleY(1) scaleX(1); }
+    }
+    .lever-pulling {
+      animation: leverPull 0.52s cubic-bezier(0.25, 1, 0.5, 1);
+      transform-origin: 50% 100%;
+    }
+
+    /* Slot Machine Reel Spin Blur */
+    @keyframes reelSpinBlur {
+      0% { transform: translateY(0); filter: blur(0); }
+      50% { transform: translateY(-18px); filter: blur(1.5px); }
+      100% { transform: translateY(0); filter: blur(0); }
+    }
+    .reel-spinning {
+      animation: reelSpinBlur 0.12s infinite ease-in-out;
+    }
+
+    /* Jackpot Flash & Pulse Animation */
+    @keyframes jackpotHousingPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.9)); }
+      50% { transform: scale(1.04); filter: drop-shadow(0 0 28px rgba(250, 204, 21, 1)); }
+    }
+    .jackpot-glow {
+      animation: jackpotHousingPulse 0.45s 5 alternate ease-in-out;
+    }
+
+    /* Sunburst Ray Rotation */
+    @keyframes sunburstSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .sunburst-animated {
+      animation: sunburstSpin 14s linear infinite;
+      transform-origin: center center;
+    }
+
+    /* Gold-Themed Neon Banner Glow */
+    @keyframes goldNeonGlowPulse {
+      0%, 100% { filter: drop-shadow(0 0 22px rgba(250, 204, 21, 0.85)) drop-shadow(0 0 45px rgba(245, 158, 11, 0.7)); }
+      50% { filter: drop-shadow(0 0 38px rgba(253, 224, 71, 1)) drop-shadow(0 0 65px rgba(234, 179, 8, 0.95)); }
+    }
+    .neon-gold-shimmer {
+      animation: goldNeonGlowPulse 0.9s infinite alternate ease-in-out;
+    }
+
+    /* Pop-up Billboard Overlay */
+    @keyframes archedJackpotPop {
+      0% { transform: translate(-50%, -50%) scale(0) rotate(-3deg); opacity: 0; }
+      45% { transform: translate(-50%, -50%) scale(1.06) rotate(1deg); opacity: 1; }
+      70% { transform: translate(-50%, -50%) scale(0.98) rotate(-0.5deg); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+    }
+    .jackpot-popup-active {
+      display: flex !important;
+    }
+    .jackpot-popup-active .jackpot-neon-billboard {
+      animation: archedJackpotPop 0.52s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      transform-origin: center center;
+    }
+
+    /* Countdown Snap & Impacts */
+    @keyframes countPopSnap {
+      0% { transform: scale(1.38); opacity: 1; filter: brightness(1.7) drop-shadow(0 0 25px currentColor); }
+      22% { transform: scale(0.94); filter: brightness(1.2) drop-shadow(0 0 15px currentColor); }
+      45% { transform: scale(1.04); }
+      100% { transform: scale(1); opacity: 1; filter: brightness(1) drop-shadow(0 0 10px currentColor); }
+    }
+    .count-anim-active {
+      animation: countPopSnap 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes goRollImpact {
+      0% { transform: scale(1.45); opacity: 1; filter: brightness(1.6) drop-shadow(0 0 35px rgba(34, 197, 94, 0.9)); }
+      25% { transform: scale(0.96); filter: brightness(1.2) drop-shadow(0 0 22px rgba(34, 197, 94, 0.8)); }
+      50% { transform: scale(1.06); filter: brightness(1.1) drop-shadow(0 0 16px rgba(34, 197, 94, 0.7)); }
+      100% { transform: scale(1.02); opacity: 1; filter: brightness(1) drop-shadow(0 0 12px rgba(34, 197, 94, 0.6)); }
+    }
+    .roll-bomb-active {
+      animation: goRollImpact 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes screenBombShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-4px, 3px); }
+      40% { transform: translate(4px, -3px); }
+      60% { transform: translate(-3px, 2px); }
+      80% { transform: translate(2px, -1px); }
+    }
+    .bomb-shake-effect {
+      animation: screenBombShake 0.38s ease-out;
+    }
+
+    @keyframes neonPulseGlow {
+      0%, 100% { box-shadow: 0 0 25px currentColor, inset 0 0 15px currentColor; transform: scale(1); }
+      50% { box-shadow: 0 0 55px currentColor, inset 0 0 30px currentColor; transform: scale(1.02); }
+    }
+    .neon-pulse-ring {
+      animation: neonPulseGlow 1.2s infinite ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100/90 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col antialiased select-none transition-colors duration-200">
+
+  <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex justify-center items-start">
+    <div class="w-full max-w-2xl">
+
+      <!-- VIEW: REGISTRATION FORM SAJA -->
+      <section id="registerView" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6 transition-colors">
+        
+        <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-indigo-500/5 dark:from-amber-500/15 dark:via-slate-800/40 dark:to-indigo-500/10 border border-amber-300/80 dark:border-amber-500/30 relative overflow-visible flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 select-none shadow-xs">
+          
+          <!-- Inner wrapper for ambient glow -->
+          <div class="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div class="absolute -top-12 -left-12 w-36 h-36 bg-amber-300/25 dark:bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-10 right-1/4 w-32 h-32 bg-amber-400/15 dark:bg-amber-300/10 rounded-full blur-2xl pointer-events-none"></div>
+          </div>
+
+          <div class="text-center sm:text-left z-10 shrink-0">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/90 dark:bg-amber-950/80 border border-amber-300/90 dark:border-amber-700/60 text-amber-900 dark:text-amber-300 text-[11px] font-extrabold tracking-wider uppercase mb-2 shadow-xs">
+              <span class="text-amber-500">✨</span>
+              <span>ANNUAL GALA EVENT</span>
+              <span class="text-amber-500">✨</span>
+            </div>
+
+            <h1 class="tracking-tight">
+              <span class="block text-[11px] sm:text-xs font-black tracking-[0.25em] text-slate-500 dark:text-slate-400 uppercase">
+                LUCKY DRAW
+              </span>
+              <span class="block text-2xl sm:text-[27px] font-black tracking-tight leading-none mt-0.5 text-slate-900 dark:text-slate-100">
+                GEBYAR MAHADAHSYAT
+              </span>
+              <div class="mt-2 flex items-center justify-center sm:justify-start gap-2">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-900 dark:bg-slate-800 text-amber-300 text-xs sm:text-sm font-black tracking-widest uppercase shadow-sm border border-slate-800 dark:border-slate-700">
+                  <span>SPEKTAKULER</span>
+                  <span class="text-white">2026</span>
+                </span>
+                <span class="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
+                  DOORPRIZE
+                </span>
+              </div>
+            </h1>
+          </div>
+
+          <!-- Sisi Kanan: Mesin Slot Silinder Emas 3D -->
+          <div class="shrink-0 relative flex items-center justify-center pr-10 sm:pr-12 z-10">
+            
+            <div id="slotHousing" class="relative bg-gradient-to-b from-[#FFF5C0] via-[#DDA835] via-50% to-[#785307] p-2 sm:p-2.5 pb-2.5 sm:pb-3 rounded-[24px] sm:rounded-[28px] shadow-[0_12px_24px_rgba(0,0,0,0.3),inset_0_3px_5px_rgba(255,255,255,0.95),inset_0_-3px_5px_rgba(80,50,5,0.6)] border-2 border-[#FFE885] w-[172px] sm:w-[188px] transition-all duration-300 overflow-visible">
+              
+              <!-- Pop-up Banner JACKPOT -->
+              <div id="jackpotOverlay" class="absolute inset-0 z-50 pointer-events-none hidden items-center justify-center">
+                <div class="jackpot-neon-billboard absolute top-1/2 left-[44%] -translate-x-1/2 -translate-y-1/2 w-[245px] sm:w-[275px] h-[125px] sm:h-[140px] flex items-center justify-center select-none neon-gold-shimmer">
+                  
+                  <svg class="w-full h-full overflow-visible" viewBox="0 0 460 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <filter id="goldNeonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="6" result="blur1" />
+                        <feGaussianBlur stdDeviation="15" result="blur2" />
+                        <feMerge>
+                          <feMergeNode in="blur2" />
+                          <feMergeNode in="blur1" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      <filter id="amberNeonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="4.5" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      <filter id="goldTextShadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#451A03" flood-opacity="0.95" />
+                        <feDropShadow dx="0" dy="7" stdDeviation="12" flood-color="#D97706" flood-opacity="0.85" />
+                      </filter>
+
+                      <linearGradient id="goldLetterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#FFFFFF" />
+                        <stop offset="18%" stop-color="#FFF9BD" />
+                        <stop offset="42%" stop-color="#FFDF2B" />
+                        <stop offset="70%" stop-color="#F59E0B" />
+                        <stop offset="92%" stop-color="#FFD000" />
+                        <stop offset="100%" stop-color="#B45309" />
+                      </linearGradient>
+
+                      <linearGradient id="marqueeGoldBgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#241402" />
+                        <stop offset="50%" stop-color="#120800" />
+                        <stop offset="100%" stop-color="#261503" />
+                      </linearGradient>
+                    </defs>
+
+                    <!-- Sinar Laser Sunburst -->
+                    <g class="sunburst-animated" opacity="0.85">
+                      <line x1="230" y1="110" x2="230" y2="-40" stroke="#FDE047" stroke-width="6" stroke-linecap="round" opacity="0.75" filter="url(#goldNeonGlow)" />
+                      <line x1="230" y1="110" x2="110" y2="-20" stroke="#F59E0B" stroke-width="4.5" stroke-linecap="round" opacity="0.65" />
+                      <line x1="230" y1="110" x2="350" y2="-20" stroke="#F59E0B" stroke-width="4.5" stroke-linecap="round" opacity="0.65" />
+                      <line x1="230" y1="110" x2="40" y2="40" stroke="#FACC15" stroke-width="5" stroke-linecap="round" opacity="0.7" />
+                      <line x1="230" y1="110" x2="420" y2="40" stroke="#FACC15" stroke-width="5" stroke-linecap="round" opacity="0.7" />
+                    </g>
+
+                    <path d="M 52 148 Q 230 168 408 148 Q 425 105 408 62 Q 230 36 52 62 Q 35 105 52 148 Z" 
+                          fill="url(#marqueeGoldBgGrad)" stroke="#3D2004" stroke-width="4" />
+                    <path d="M 50 150 Q 230 171 410 150 Q 428 105 410 60 Q 230 34 50 60 Q 32 105 50 150 Z" 
+                          fill="none" stroke="#FDE047" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#goldNeonGlow)" />
+                    <text x="230" y="125" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="58" letter-spacing="4"
+                          fill="url(#goldLetterGrad)" stroke="#FFFBEB" stroke-width="1.8" filter="url(#goldTextShadow)">
+                      JACKPOT!
+                    </text>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Jendela Drum Bergaris Gelap -->
+              <div class="bg-gradient-to-b from-[#181D24] via-[#0E131A] to-[#181D24] rounded-[18px] sm:rounded-[20px] p-1.5 sm:p-2 shadow-[inset_0_4px_10px_rgba(0,0,0,0.95),0_1px_2px_rgba(255,255,255,0.6)] border border-[#96701B]/80">
+                <div class="flex items-center justify-between gap-1 sm:gap-1.5">
+                  <div class="flex-1 bg-gradient-to-b from-[#E2E8F0] via-[#FFFFFF] via-50% to-[#CBD5E1] rounded-lg sm:rounded-xl h-16 sm:h-18 shadow-[0_3px_6px_rgba(0,0,0,0.25),inset_0_2px_4px_rgba(255,255,255,1),inset_0_-2px_4px_rgba(148,163,184,0.5)] border border-slate-300 flex items-center justify-center overflow-hidden relative">
+                    <div id="reel1" class="transform transition-transform duration-200 flex items-center justify-center w-full h-full"></div>
+                  </div>
+                  <div class="flex-1 bg-gradient-to-b from-[#E2E8F0] via-[#FFFFFF] via-50% to-[#CBD5E1] rounded-lg sm:rounded-xl h-16 sm:h-18 shadow-[0_3px_6px_rgba(0,0,0,0.25),inset_0_2px_4px_rgba(255,255,255,1),inset_0_-2px_4px_rgba(148,163,184,0.5)] border border-slate-300 flex items-center justify-center overflow-hidden relative">
+                    <div id="reel2" class="transform transition-transform duration-200 flex items-center justify-center w-full h-full"></div>
+                  </div>
+                  <div class="flex-1 bg-gradient-to-b from-[#E2E8F0] via-[#FFFFFF] via-50% to-[#CBD5E1] rounded-lg sm:rounded-xl h-16 sm:h-18 shadow-[0_3px_6px_rgba(0,0,0,0.25),inset_0_2px_4px_rgba(255,255,255,1),inset_0_-2px_4px_rgba(148,163,184,0.5)] border border-slate-300 flex items-center justify-center overflow-hidden relative">
+                    <div id="reel3" class="transform transition-transform duration-200 flex items-center justify-center w-full h-full"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Visor Aksen Bawah -->
+              <div class="w-4/5 h-2.5 sm:h-3 bg-gradient-to-r from-[#805809] via-[#452E04] to-[#805809] rounded-full mx-auto mt-1.5 sm:mt-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9),0_1px_1px_rgba(255,255,255,0.5)] border border-[#BF9128]/60"></div>
+
+              <!-- Dudukan Poros As Silinder Emas & Tuas -->
+              <div class="absolute -right-6 sm:-right-7 top-[54%] -translate-y-1/2 flex items-center z-30 select-none">
+                <div class="w-1.5 sm:w-2 h-7 sm:h-8 bg-gradient-to-b from-[#FFEBA3] via-[#CE9426] to-[#5C3B02] border-y border-l border-[#FFE885]"></div>
+                
+                <div class="relative w-4.5 sm:w-5 h-8 sm:h-9 bg-gradient-to-b from-[#FFF5C0] via-[#DDA835] via-50% to-[#553603] rounded-xs border-y border-r border-[#FFE885] shadow-[0_4px_8px_rgba(0,0,0,0.35)] flex items-center justify-center cursor-pointer" onclick="handleLeverPull(event)" title="Tarik Tuas Slot!">
+                  <div class="w-full h-1.5 bg-gradient-to-b from-[#4A3002] to-[#754E05] border-y border-[#FFE885]/40 pointer-events-none"></div>
+
+                  <!-- Jangkar Pangkal Tuas -->
+                  <div class="absolute bottom-[calc(55%)] left-1/2 -translate-x-1/2 z-30">
+                    <div id="slotLever" onpointerdown="handleLeverPull(event)" 
+                         class="flex flex-col items-center cursor-pointer group select-none transition-transform" 
+                         style="transform-origin: 50% 100%;" 
+                         title="Tarik Tuas Slot!">
+                      
+                      <div class="w-1.5 h-1 bg-gradient-to-b from-[#FFF5C0] to-[#C99020] rounded-t-full shadow-xs"></div>
+                      <div class="relative w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-[#FF5252] via-[#DC2626] to-[#7F1D1D] shadow-[0_3px_6px_rgba(0,0,0,0.6),inset_0_2px_3px_rgba(255,255,255,0.85)] border border-[#7F1D1D] group-hover:scale-105 active:scale-95 transition flex items-center justify-center -mb-0.5 z-30">
+                        <div class="w-full h-1 bg-gradient-to-r from-[#C99020] via-[#FFF5C0] to-[#8C6207] border-y border-[#FFE885] shadow-xs"></div>
+                      </div>
+                      <div class="w-2 sm:w-2.5 h-1 bg-gradient-to-b from-[#FFF5C0] to-[#A36D08] rounded-xs shadow-xs z-20"></div>
+                      <div class="w-1.5 sm:w-2 h-4.5 sm:h-5 bg-gradient-to-r from-[#FFF5B8] via-[#E2B038] to-[#784F05] border-x border-[#634305] shadow-xs z-20"></div>
+                      <div class="w-3.5 sm:w-4 h-2.5 bg-gradient-to-b from-[#FFF5C0] via-[#DDA835] to-[#5C3B02] rounded-t-sm border-t border-x border-[#FFE885] shadow-[0_1px_2px_rgba(0,0,0,0.4)] z-20"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="w-2 sm:w-2.5 h-6 sm:h-7 bg-gradient-to-b from-[#FFF2B5] via-[#B88118] to-[#553603] rounded-r-md border-y border-r border-[#FFE885]"></div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4 pt-2">
+          
+          <!-- 1. NAMA LENGKAP -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              1. NAMA LENGKAP <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-sm">👤</span>
+              <input type="text" id="regName" required placeholder="Masukkan nama lengkap Anda"
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900/40 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-sm transition outline-none font-medium">
+            </div>
+          </div>
+
+          <!-- 2. JABATAN DROPDOWN (BERSIH TANPA KODE ANGKA) -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              2. JABATAN <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-sm">🎖️</span>
+              <select id="regPosition" required
+                class="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900/40 text-slate-900 dark:text-slate-100 text-sm font-semibold transition outline-none appearance-none cursor-pointer">
+                <option value="" disabled selected class="bg-white dark:bg-slate-800 text-slate-500">-- Pilih Jabatan Anda --</option>
+                <option value="Head" class="bg-white dark:bg-slate-800">👑 Head</option>
+                <option value="SPV" class="bg-white dark:bg-slate-800">⭐ SPV</option>
+                <option value="Captain" class="bg-white dark:bg-slate-800">⚡ Captain</option>
+                <option value="Senior Staff" class="bg-white dark:bg-slate-800">💼 Senior Staff</option>
+                <option value="Junior Staff" class="bg-white dark:bg-slate-800">🌱 Junior Staff</option>
+                <option value="Freelance" class="bg-white dark:bg-slate-800">🚀 Freelance</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-xs">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. EMAIL PERUSAHAAN -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              3. EMAIL <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 text-sm">✉️</span>
+              <input type="text" id="regEmail" required placeholder="nama@zentoracore.com"
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900/40 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-sm transition outline-none font-medium">
+            </div>
+            <p class="mt-1.5 text-[11px] text-amber-700 dark:text-amber-400 font-medium flex items-center gap-1.5">
+              <span>💡</span>
+              <span>Email yang didaftarkan akan digunakan untuk pengiriman kode unik.</span>
+            </p>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2">
+            <button type="submit" id="submitBtn" class="w-full py-3.5 px-6 rounded-xl font-black tracking-wider text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:from-amber-300 hover:to-yellow-400 shadow-lg shadow-amber-400/20 transition transform active:scale-[0.99] flex items-center justify-center text-sm cursor-pointer border border-amber-300 dark:border-amber-400/60 uppercase">
+              Submit
+            </button>
+          </div>
+        </form>
+
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+          <span>© 2026 Zentora Core Doorprize System</span>
+          <span>Form Registrasi Karyawan</span>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL 1: FUTURISTIC CASINO COUNTDOWN MODAL -->
+  <div id="countdownModal" class="fixed inset-0 z-50 bg-slate-950/92 backdrop-blur-2xl hidden items-center justify-center p-4 select-none">
+    <div id="countdownContentBox" class="relative flex flex-col items-center justify-center text-center max-w-sm w-full transition-transform">
+      <div id="countAmbientGlow" class="absolute w-80 h-80 rounded-full blur-3xl pointer-events-none transition-all duration-300 bg-sky-500/30"></div>
+
+      <div id="countPulseRing" class="relative w-56 h-56 sm:w-64 sm:h-64 rounded-full border-4 neon-pulse-ring flex items-center justify-center bg-slate-900/85 backdrop-blur-md transition-all duration-300 overflow-hidden shadow-2xl border-sky-400 text-sky-400">
+        <div id="countBadgeWrapper" class="relative z-10 flex flex-col items-center justify-center">
+          <span id="countText" class="font-mono font-black text-5xl sm:text-6xl tracking-tight transition-all duration-300">
+            READY!
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CANVAS MODAL ROLL ANGKA 4 DIGIT -->
+  <div id="drawCanvasModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl p-6 sm:p-7 relative flex flex-col items-center my-auto transition-colors">
+      
+      <button onclick="closeDrawCanvasModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer" title="Tutup">
+        ✕
+      </button>
+
+      <div class="text-center mb-4">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[10px] font-black tracking-widest uppercase">
+          <span>✨</span> KODE UNIK PESERTA
+        </span>
+        <h3 id="drawParticipantName" class="text-xl font-black tracking-tight text-slate-900 dark:text-white mt-2">
+          Karyawan Zentora Core
+        </h3>
+        <p id="drawPositionLabel" class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+          Jabatan: Head
+        </p>
+      </div>
+
+      <!-- CANVAS CONTAINER -->
+      <div class="relative w-full max-w-[380px] h-[170px] sm:h-[190px] bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700/80 shadow-[inset_0_4px_16px_rgba(0,0,0,0.8),0_10px_25px_-5px_rgba(0,0,0,0.4)] flex items-center justify-center">
+        <canvas id="lotteryBallCanvas" class="w-full h-full block"></canvas>
+
+        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 sm:h-18 border-y-2 border-amber-400/40 bg-amber-400/5 pointer-events-none flex items-center justify-between px-2">
+          <span class="text-[10px] text-amber-400/70 font-mono">▶</span>
+          <span class="text-[10px] text-amber-400/70 font-mono">◀</span>
+        </div>
+      </div>
+
+      <!-- RESULT SUMMARY -->
+      <div id="drawResultSummary" class="w-full mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 hidden transition-all">
+        <div class="flex items-center justify-between pb-2 border-b border-amber-200/80 dark:border-amber-800/60 mb-3">
+          <span class="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+            <span class="text-emerald-500">🔒</span> KODE UNIK PESERTA
+          </span>
+          <span id="summaryTimestamp" class="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+            2026-09-23
+          </span>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800/90 p-4 rounded-xl border border-amber-200/80 dark:border-slate-700 text-center shadow-xs">
+          <span id="summary4D" class="font-mono font-black text-amber-500 dark:text-amber-400 text-4xl sm:text-5xl tracking-widest">----</span>
+          <div class="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-700/70 flex items-center justify-center gap-1.5 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
+            <span class="text-sm">📸</span>
+            <span>Silakan screenshot kode ini sebagai bukti nomor kupon Anda.</span>
+          </div>
+        </div>
+
+        <div class="mt-3 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/70 flex items-start gap-2 text-left">
+          <span class="text-emerald-600 dark:text-emerald-400 text-base mt-0.5">📨</span>
+          <div class="flex-1">
+            <p class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
+              Kode Kupon Berhasil Dikirim ke Email Anda!
+            </p>
+            <p class="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono mt-0.5" id="summaryEmailTarget">
+              dikirim ke: nama@zentoracore.com
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-3 flex">
+          <button onclick="closeDrawCanvasModal()" class="w-full py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-sm">
+            Selesai
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 3: INBOX EMAIL PREVIEW MODAL -->
+  <div id="emailPreviewModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md shadow-2xl p-5 sm:p-6 relative flex flex-col my-auto transition-colors">
+      
+      <button onclick="closeEmailPreviewModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer" title="Tutup">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
+        <span class="w-3 h-3 rounded-full bg-red-400"></span>
+        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+        <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+        <span class="ml-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">Zentora Mail Client - Inbox</span>
+      </div>
+
+      <div class="bg-slate-50 dark:bg-slate-800/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 mb-4 text-xs space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700 dark:text-slate-200">Dari:</span>
+          <span class="font-mono text-slate-600 dark:text-slate-400">noreply-doorprize@zentoracore.com</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700 dark:text-slate-200">Kepada:</span>
+          <span class="font-mono text-indigo-600 dark:text-indigo-400 font-semibold" id="emailModalRecipient">karyawan@zentoracore.com</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700 dark:text-slate-200">Subjek:</span>
+          <span class="font-bold text-slate-900 dark:text-white">🎟️ [E-TICKET RESMI] Nomor Kupon Undian Door Prize 2026</span>
+        </div>
+      </div>
+
+      <div class="border-2 border-dashed border-amber-300 dark:border-amber-600/70 bg-gradient-to-b from-amber-500/10 via-amber-400/5 to-transparent p-5 rounded-2xl text-center space-y-3">
+        <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-mono text-[10px] font-bold border border-amber-300">
+          ZENTORA CORE OFFICIAL E-TICKET
+        </div>
+
+        <div>
+          <h4 id="emailModalParticipantName" class="text-base font-extrabold text-slate-900 dark:text-white">Nama Karyawan</h4>
+          <p id="emailModalPositionBadge" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Jabatan: Head</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-amber-200 dark:border-slate-700 shadow-sm">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">KODE KUPON TERKUNCI</span>
+          <span id="emailModal4D" class="font-mono font-black text-amber-500 text-4xl tracking-widest">----</span>
+          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block mt-1">● STATUS: VERIFIED & LOCKED</span>
+        </div>
+
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 text-left pt-2 border-t border-amber-200/60 dark:border-slate-800">
+          Simpan email ini sebagai bukti kepemilikan kupon sah pada pengundian Doorprize Gala Dinner 2026.
+        </p>
+      </div>
+
+      <div class="mt-4 flex gap-2">
+        <button onclick="closeEmailPreviewModal()" class="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition cursor-pointer">
+          Tutup Pratinjau Email
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 4: EMAILJS CONFIGURATION MODAL -->
+  <div id="emailJSSetupModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md shadow-2xl p-5 sm:p-6 relative flex flex-col my-auto transition-colors">
+      <button onclick="closeEmailJSModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer" title="Tutup">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xl">⚙️</span>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">Konfigurasi EmailJS (Email Asli)</h3>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+        Kunci disimpan di penyimpanan browser (localStorage) Anda untuk pengiriman otomatis e-ticket ke inbox email karyawan.
+      </p>
+
+      <form onsubmit="saveEmailJSConfig(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Public Key / User ID</label>
+          <input type="text" id="cfgEmailJSPublicKey" placeholder="Contoh: user_AbC123XyZ..."
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Service ID</label>
+          <input type="text" id="cfgEmailJSServiceId" placeholder="Contoh: service_zentora..."
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Template ID</label>
+          <input type="text" id="cfgEmailJSTemplateId" placeholder="Contoh: template_doorprize..."
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-amber-500">
+        </div>
+
+        <div class="pt-2 flex gap-2">
+          <button type="submit" class="flex-1 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl transition cursor-pointer shadow-sm">
+            💾 Simpan Kunci
+          </button>
+          <button type="button" onclick="testEmailJSSend()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold rounded-xl transition cursor-pointer">
+            🧪 Tes Kirim
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Modal -->
+  <div id="toast" class="fixed bottom-6 right-6 max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-xl z-50 transform translate-y-32 opacity-0 transition-all duration-300 flex items-start gap-3 pointer-events-none">
+    <div id="toastIcon" class="text-xl mt-0.5">✅</div>
+    <div>
+      <h4 id="toastTitle" class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Info</h4>
+      <p id="toastMessage" class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Pesan sistem</p>
+    </div>
+  </div>
+
+  <script>
+    const POSITION_MASTERS = {
+      'Head': { prefix: '1', min: 1000, max: 1999, label: 'Head' },
+      'SPV': { prefix: '2', min: 2000, max: 2999, label: 'SPV' },
+      'Captain': { prefix: '3', min: 3000, max: 3999, label: 'Captain' },
+      'Senior Staff': { prefix: '4', min: 4000, max: 4999, label: 'Senior Staff' },
+      'Junior Staff': { prefix: '5', min: 5000, max: 5999, label: 'Junior Staff' },
+      'Freelance': { prefix: '6', min: 6000, max: 6999, label: 'Freelance' }
+    };
+
+    const INITIAL_MOCK_PARTICIPANTS = [
+      { id: '1', name: 'Dimas Wicaksono', position: 'Head', email: 'dimas.w@zentoracore.com', date: '2026-09-20 14:10', code4D: '1842', emailSent: true },
+      { id: '2', name: 'Jessica Tanuwidjaja', position: 'SPV', email: 'jessica.tan@zentoracore.com', date: '2026-09-21 09:30', code4D: '2591', emailSent: true },
+      { id: '3', name: 'Rian Pratama', position: 'Captain', email: 'rian.pratama@zentoracore.com', date: '2026-09-21 16:45', code4D: '3810', emailSent: true },
+      { id: '4', name: 'Dewi Lestari', position: 'Senior Staff', email: 'dewi.lestari@zentoracore.com', date: '2026-09-22 11:20', code4D: '4102', emailSent: true },
+      { id: '5', name: 'Hendro Gunawan', position: 'Junior Staff', email: 'hendro.g@zentoracore.com', date: '2026-09-22 19:15', code4D: '5739', emailSent: true }
+    ];
+
+    let participants = [];
+    const BACKEND_API_URL = 'http://localhost:3000/api';
+
+    // Kirim data peserta baru ke backend server jika aktif
+    async function syncToBackendServer(participant) {
+      try {
+        await fetch(`${BACKEND_API_URL}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(participant)
+        });
+      } catch (err) {
+        console.info('ℹ️ Server backend offline, data tersimpan di database lokal browser (localStorage).');
+      }
+    }
+
+    // Coba ambil data terbaru dari backend server jika online, jika tidak gunakan localStorage
+    async function syncParticipantsFromBackend() {
+      try {
+        const res = await fetch(`${BACKEND_API_URL}/participants`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            participants = json.data;
+            saveParticipantsData();
+            console.log('✅ Tersinkronisasi dengan Server Backend:', participants.length, 'peserta.');
+            return;
+          }
+        }
+      } catch (err) {
+        console.info('ℹ️ Server backend offline / tidak aktif, menggunakan local database browser.');
+      }
+    }
+
+    function loadParticipantsData() {
+      try {
+        const saved = localStorage.getItem('zentora_participants_data');
+        if (saved) {
+          participants = JSON.parse(saved);
+        } else {
+          participants = [...INITIAL_MOCK_PARTICIPANTS];
+          saveParticipantsData();
+        }
+      } catch (e) {
+        participants = [...INITIAL_MOCK_PARTICIPANTS];
+      }
+    }
+
+    function saveParticipantsData() {
+      try {
+        localStorage.setItem('zentora_participants_data', JSON.stringify(participants));
+      } catch (e) {}
+    }
+
+    let currentDrawParticipant = null;
+    let scoreTickerInterval = null;
+
+    const DEFAULT_EMAILJS_CONFIG = {
+      publicKey: '',
+      serviceId: '',
+      templateId: ''
+    };
+    let emailjsConfig = { ...DEFAULT_EMAILJS_CONFIG };
+
+    function loadEmailJSConfig() {
+      try {
+        const saved = localStorage.getItem('zentora_emailjs_config');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          emailjsConfig = { ...DEFAULT_EMAILJS_CONFIG, ...parsed };
+        }
+      } catch (e) {}
+    }
+
+    function initEmailJS() {
+      loadEmailJSConfig();
+      if (typeof emailjs !== 'undefined' && emailjsConfig.publicKey) {
+        try {
+          emailjs.init({ publicKey: emailjsConfig.publicKey });
+        } catch (err) {}
+      }
+    }
+
+    function openEmailJSModal() {
+      loadEmailJSConfig();
+      const pubEl = document.getElementById('cfgEmailJSPublicKey');
+      const srvEl = document.getElementById('cfgEmailJSServiceId');
+      const tmpEl = document.getElementById('cfgEmailJSTemplateId');
+      if (pubEl) pubEl.value = emailjsConfig.publicKey || '';
+      if (srvEl) srvEl.value = emailjsConfig.serviceId || '';
+      if (tmpEl) tmpEl.value = emailjsConfig.templateId || '';
+
+      const modal = document.getElementById('emailJSSetupModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeEmailJSModal() {
+      const modal = document.getElementById('emailJSSetupModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function saveEmailJSConfig(e) {
+      if (e) e.preventDefault();
+      const pubKey = (document.getElementById('cfgEmailJSPublicKey')?.value || '').trim();
+      const srvId = (document.getElementById('cfgEmailJSServiceId')?.value || '').trim();
+      const tmpId = (document.getElementById('cfgEmailJSTemplateId')?.value || '').trim();
+
+      emailjsConfig = {
+        publicKey: pubKey,
+        serviceId: srvId,
+        templateId: tmpId
+      };
+
+      try {
+        localStorage.setItem('zentora_emailjs_config', JSON.stringify(emailjsConfig));
+      } catch (err) {}
+
+      initEmailJS();
+      closeEmailJSModal();
+      showToast('Kunci Tersimpan', 'Pengaturan EmailJS berhasil disimpan di peramban.');
+    }
+
+    async function sendRealEmailWithEmailJS(participant) {
+      if (!participant) return;
+      loadEmailJSConfig();
+
+      if (!emailjsConfig.publicKey || !emailjsConfig.serviceId || !emailjsConfig.templateId) {
+        return;
+      }
+
+      if (typeof emailjs === 'undefined') return;
+
+      const codeVal = String(participant.code4D || participant.code || '').trim();
+
+      const templateParams = {
+        to_name: participant.name,
+        to_email: participant.email,
+        position: participant.position,
+        unique_code: codeVal,
+        register_date: participant.date || new Date().toLocaleString()
+      };
+
+      try {
+        await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, templateParams);
+        participant.emailSent = true;
+        saveParticipantsData();
+      } catch (error) {
+        console.warn('Gagal kirim via EmailJS:', error);
+      }
+    }
+
+    async function testEmailJSSend() {
+      loadEmailJSConfig();
+      if (!emailjsConfig.publicKey || !emailjsConfig.serviceId || !emailjsConfig.templateId) {
+        showToast('Kunci Belum Lengkap', 'Mohon isi Public Key, Service ID, dan Template ID terlebih dahulu.');
+        return;
+      }
+      showToast('Mengirim Email Tes...', 'Mohon tunggu sejenak...');
+      try {
+        await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, {
+          to_name: 'Admin Zentora',
+          to_email: 'test@zentoracore.com',
+          position: 'Admin Test',
+          unique_code: '9999',
+          register_date: new Date().toISOString()
+        });
+        showToast('Email Tes Berhasil!', 'Koneksi EmailJS berhasil terhubung ke server.');
+      } catch (err) {
+        showToast('Tes Gagal', err.text || err.message || 'Periksa Service & Template ID Anda.');
+      }
+    }
+
+    function resendParticipantEmail(id) {
+      const p = participants.find(item => item.id === id);
+      if (p) {
+        sendRealEmailWithEmailJS(p);
+      }
+    }
+
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtxClass) {
+          audioCtx = new AudioCtxClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function warmUpAudio() {
+      try {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume();
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('pointerdown', warmUpAudio, { passive: true, once: false });
+    window.addEventListener('keydown', warmUpAudio, { passive: true, once: false });
+
+    function playReadySound() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const notes = [
+          { f: 523.25, t: 0, d: 0.14 },
+          { f: 783.99, t: 0.11, d: 0.22 }
+        ];
+        notes.forEach(n => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(n.f, now + n.t);
+          gain.gain.setValueAtTime(0.28, now + n.t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.d);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + n.t);
+          osc.stop(now + n.t + n.d);
+        });
+      } catch (e) {}
+    }
+
+    function playCountdownBeep(step) {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const racePitch = 523.25;
+        const duration = 0.15;
+
+        const oscSine = ctx.createOscillator();
+        const gainSine = ctx.createGain();
+        oscSine.type = 'sine';
+        oscSine.frequency.setValueAtTime(racePitch, now);
+        gainSine.gain.setValueAtTime(0.35, now);
+        gainSine.gain.setValueAtTime(0.35, now + duration - 0.03);
+        gainSine.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        oscSine.connect(gainSine);
+        gainSine.connect(ctx.destination);
+        oscSine.start(now);
+        oscSine.stop(now + duration);
+      } catch (e) {}
+    }
+
+    function playRaceStartSound() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const goPitch = 1046.50;
+        const goDuration = 0.35;
+
+        const oscSine = ctx.createOscillator();
+        const gainSine = ctx.createGain();
+        oscSine.type = 'sine';
+        oscSine.frequency.setValueAtTime(goPitch, now);
+        gainSine.gain.setValueAtTime(0.30, now);
+        gainSine.gain.exponentialRampToValueAtTime(0.0001, now + goDuration);
+        oscSine.connect(gainSine);
+        gainSine.connect(ctx.destination);
+        oscSine.start(now);
+        oscSine.stop(now + goDuration);
+      } catch (e) {}
+    }
+
+    function playScoreCountTick() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1050 + Math.random() * 250, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.038);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.038);
+      } catch (e) {}
+    }
+
+    function startScoreCountingAudio() {
+      stopScoreCountingAudio();
+      playScoreCountTick();
+      scoreTickerInterval = setInterval(playScoreCountTick, 72);
+    }
+
+    function stopScoreCountingAudio() {
+      if (scoreTickerInterval) {
+        clearInterval(scoreTickerInterval);
+        scoreTickerInterval = null;
+      }
+    }
+
+    function playDigitLockSound(digitIdx) {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const lockNotes = [880.00, 1108.73, 1318.51, 1760.00];
+        const freq = lockNotes[digitIdx] || 880.00;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } catch (e) {}
+    }
+
+    function playWinFanfareSound() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const fanfareMotif = [
+          { f: 392.00, t: 0.00, d: 0.12, gain: 0.22, type: 'triangle' },
+          { f: 523.25, t: 0.09, d: 0.12, gain: 0.26, type: 'triangle' },
+          { f: 659.25, t: 0.18, d: 0.14, gain: 0.28, type: 'triangle' },
+          { f: 783.99, t: 0.26, d: 0.16, gain: 0.30, type: 'triangle' },
+        ];
+        fanfareMotif.forEach(note => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = note.type;
+          osc.frequency.setValueAtTime(note.f, now + note.t);
+          gain.gain.setValueAtTime(0, now + note.t);
+          gain.gain.linearRampToValueAtTime(note.gain, now + note.t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + note.t + note.d);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + note.t);
+          osc.stop(now + note.t + note.d);
+        });
+
+        const chordTime = now + 0.36;
+        const grandChord = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        grandChord.forEach(f => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, chordTime);
+          gain.gain.setValueAtTime(0, chordTime);
+          gain.gain.linearRampToValueAtTime(0.18, chordTime + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, chordTime + 1.1);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(chordTime);
+          osc.stop(chordTime + 1.1);
+        });
+      } catch (e) {}
+    }
+
+    const SYMBOL_SVGS = {
+      seven: `<svg class="w-9 h-9 sm:w-10 sm:h-10 drop-shadow-[0_3px_5px_rgba(0,0,0,0.7)]" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="goldRim7" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFFBEB"/>
+            <stop offset="25%" stop-color="#FDE047"/>
+            <stop offset="50%" stop-color="#D97706"/>
+            <stop offset="100%" stop-color="#78350F"/>
+          </linearGradient>
+          <linearGradient id="redCore7" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FF5252"/>
+            <stop offset="50%" stop-color="#E50914"/>
+            <stop offset="100%" stop-color="#7F1D1D"/>
+          </linearGradient>
+        </defs>
+        <path d="M 14,16 L 48,16 L 28,52 L 36,52 L 52,16 L 52,12 L 14,12 Z" fill="url(#goldRim7)" stroke="#533703" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M 17,17 L 45,17 L 27,49 L 33,49 L 48,17 L 48,14 L 17,14 Z" fill="url(#redCore7)"/>
+      </svg>`,
+      star: `<svg class="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-[0_2px_3px_rgba(0,0,0,0.25)]" viewBox="0 0 64 64" fill="none"><polygon points="32,8 37,23 53,23 40,33 45,49 32,39 19,49 24,33 11,23 27,23" fill="#FACC15" stroke="#854D0E" stroke-width="2.2" stroke-linejoin="round"/></svg>`,
+      diamond: `<svg class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-[0_2px_3px_rgba(0,0,0,0.25)]" viewBox="0 0 64 64" fill="none"><polygon points="20,18 44,18 52,28 12,28" fill="#BAE6FD" stroke="#0369A1" stroke-width="2" stroke-linejoin="round"/><polygon points="12,28 52,28 32,50" fill="#0284C7" stroke="#0369A1" stroke-width="2" stroke-linejoin="round"/></svg>`,
+      cherries: `<svg class="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="cherryLeftG" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#FF6B6B"/>
+            <stop offset="40%" stop-color="#DC2626"/>
+            <stop offset="100%" stop-color="#7F1D1D"/>
+          </radialGradient>
+          <radialGradient id="cherryRightG" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#FF6B6B"/>
+            <stop offset="40%" stop-color="#DC2626"/>
+            <stop offset="100%" stop-color="#7F1D1D"/>
+          </radialGradient>
+        </defs>
+        <!-- Daun Hijau -->
+        <path d="M 32 16 C 36 10 46 11 49 15 C 48 20 40 22 32 18 Z" fill="#22C55E" stroke="#14532D" stroke-width="1.5" stroke-linejoin="round"/>
+        <!-- Tangkai Ceri -->
+        <path d="M 33 17 Q 26 23 23 37" stroke="#451A03" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+        <path d="M 33 17 Q 38 23 42 37" stroke="#451A03" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+        <!-- Buah Ceri Kiri -->
+        <circle cx="21" cy="42" r="10.5" fill="url(#cherryLeftG)" stroke="#451A03" stroke-width="1.6"/>
+        <ellipse cx="18" cy="38" rx="3.2" ry="1.8" transform="rotate(-30 18 38)" fill="#FFFFFF" opacity="0.65"/>
+        <!-- Buah Ceri Kanan -->
+        <circle cx="43" cy="42" r="10.5" fill="url(#cherryRightG)" stroke="#451A03" stroke-width="1.6"/>
+        <ellipse cx="40" cy="38" rx="3.2" ry="1.8" transform="rotate(-30 40 38)" fill="#FFFFFF" opacity="0.65"/>
+      </svg>`,
+      crown: `<svg class="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-[0_2px_3px_rgba(0,0,0,0.25)]" viewBox="0 0 64 64" fill="none"><path d="M14 46L10 22L22 32L32 16L42 32L54 22L50 46H14Z" fill="#F59E0B" stroke="#78350F" stroke-width="2" stroke-linejoin="round"/><circle cx="32" cy="15" r="3" fill="#EF4444"/><rect x="16" y="40" width="32" height="4" rx="2" fill="#FEF3C7"/></svg>`,
+      bell: `<svg class="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-[0_2px_3px_rgba(0,0,0,0.25)]" viewBox="0 0 64 64" fill="none"><path d="M32 12C25 12 20 17 20 25V37L15 45H49L44 37V25C44 17 39 12 32 12Z" fill="#EAB308" stroke="#713F12" stroke-width="2" stroke-linejoin="round"/><circle cx="32" cy="48" r="4.5" fill="#CA8A04" stroke="#713F12" stroke-width="2"/></svg>`
+    };
+
+    const symbolKeys = ['seven', 'star', 'diamond', 'cherries', 'crown', 'bell'];
+    let isSlotSpinning = false;
+    let slotSpinInterval = null;
+    let autoRollTimer = null;
+    let isModalOpen = false;
+
+    function stopSlotSpinning() {
+      if (slotSpinInterval) {
+        clearInterval(slotSpinInterval);
+        slotSpinInterval = null;
+      }
+      isSlotSpinning = false;
+      const reel1 = document.getElementById('reel1');
+      const reel2 = document.getElementById('reel2');
+      const reel3 = document.getElementById('reel3');
+      if (reel1) reel1.classList.remove('reel-spinning');
+      if (reel2) reel2.classList.remove('reel-spinning');
+      if (reel3) reel3.classList.remove('reel-spinning');
+      const lever = document.getElementById('slotLever');
+      if (lever) lever.classList.remove('lever-pulling');
+    }
+
+    function handleLeverPull(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      warmUpAudio();
+      const isManualWin = Math.random() < 0.15;
+      spinSlotReels(isManualWin);
+    }
+
+    function spinSlotReels(forceJackpot = false) {
+      if (isSlotSpinning || isModalOpen) return;
+      isSlotSpinning = true;
+
+      const lever = document.getElementById('slotLever');
+      if (lever) {
+        lever.classList.remove('lever-pulling');
+        void lever.offsetWidth;
+        lever.classList.add('lever-pulling');
+      }
+
+      const reel1 = document.getElementById('reel1');
+      const reel2 = document.getElementById('reel2');
+      const reel3 = document.getElementById('reel3');
+
+      if (!reel1 || !reel2 || !reel3) {
+        isSlotSpinning = false;
+        return;
+      }
+
+      reel1.classList.add('reel-spinning');
+      reel2.classList.add('reel-spinning');
+      reel3.classList.add('reel-spinning');
+
+      let count = 0;
+      const totalSteps = 12;
+      slotSpinInterval = setInterval(() => {
+        const rand1 = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+        const rand2 = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+        const rand3 = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+
+        reel1.innerHTML = SYMBOL_SVGS[rand1];
+        reel2.innerHTML = SYMBOL_SVGS[rand2];
+        reel3.innerHTML = SYMBOL_SVGS[rand3];
+        
+        count++;
+
+        if (count >= totalSteps) {
+          clearInterval(slotSpinInterval);
+          slotSpinInterval = null;
+          reel1.classList.remove('reel-spinning');
+          reel2.classList.remove('reel-spinning');
+          reel3.classList.remove('reel-spinning');
+          isSlotSpinning = false;
+
+          const isJackpot = forceJackpot || Math.random() < 0.05;
+          if (isJackpot) {
+            reel1.innerHTML = SYMBOL_SVGS.seven;
+            reel2.innerHTML = SYMBOL_SVGS.seven;
+            reel3.innerHTML = SYMBOL_SVGS.seven;
+            triggerJackpotCelebration();
+          } else {
+            const final1 = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+            let final2 = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+            let final3 = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+            while (final2 === final1) {
+              final2 = symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+            }
+            reel1.innerHTML = SYMBOL_SVGS[final1];
+            reel2.innerHTML = SYMBOL_SVGS[final2];
+            reel3.innerHTML = SYMBOL_SVGS[final3];
+          }
+        }
+      }, 65);
+    }
+
+    function triggerJackpotCelebration() {
+      const overlay = document.getElementById('jackpotOverlay');
+      const housing = document.getElementById('slotHousing');
+
+      if (overlay) {
+        overlay.classList.remove('hidden', 'jackpot-popup-active');
+        void overlay.offsetWidth;
+        overlay.classList.add('jackpot-popup-active');
+      }
+
+      if (housing) {
+        housing.classList.remove('jackpot-glow');
+        void housing.offsetWidth;
+        housing.classList.add('jackpot-glow');
+      }
+
+      try {
+        confetti({
+          particleCount: 75,
+          spread: 80,
+          origin: { y: 0.4 }
+        });
+      } catch (e) {}
+
+      setTimeout(() => {
+        if (overlay) {
+          overlay.classList.remove('jackpot-popup-active');
+          overlay.classList.add('hidden');
+        }
+        if (housing) {
+          housing.classList.remove('jackpot-glow');
+        }
+      }, 2800);
+    }
+
+    function startAutoRoll() {
+      if (autoRollTimer) clearInterval(autoRollTimer);
+      autoRollTimer = setInterval(() => {
+        if (!isSlotSpinning && !isModalOpen) {
+          spinSlotReels();
+        }
+      }, 4500);
+    }
+
+    function stopJackpotEffects() {
+      try {
+        if (typeof confetti === 'function' && typeof confetti.reset === 'function') {
+          confetti.reset();
+        }
+      } catch (e) {}
+
+      const overlay = document.getElementById('jackpotOverlay');
+      if (overlay) {
+        overlay.classList.remove('jackpot-popup-active');
+        overlay.classList.add('hidden');
+      }
+      const housing = document.getElementById('slotHousing');
+      if (housing) housing.classList.remove('jackpot-glow');
+    }
+
+    let countdownTimer = null;
+
+    const COUNTDOWN_CONFIG = {
+      'ready': {
+        text: 'READY!',
+        ringColor: '#38bdf8',
+        textColorClass: 'text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-200 to-indigo-300 drop-shadow-[0_0_35px_rgba(56,189,248,0.95)] text-5xl sm:text-6xl',
+        glowBgClass: 'bg-sky-500/30'
+      },
+      3: {
+        text: '3',
+        ringColor: '#06b6d4',
+        textColorClass: 'text-transparent bg-clip-text bg-gradient-to-b from-cyan-200 via-cyan-400 to-blue-500 drop-shadow-[0_0_35px_rgba(6,182,212,0.95)] text-7xl sm:text-8xl',
+        glowBgClass: 'bg-cyan-500/25'
+      },
+      2: {
+        text: '2',
+        ringColor: '#d946ef',
+        textColorClass: 'text-transparent bg-clip-text bg-gradient-to-b from-fuchsia-200 via-fuchsia-400 to-purple-600 drop-shadow-[0_0_35px_rgba(217,70,239,0.95)] text-7xl sm:text-8xl',
+        glowBgClass: 'bg-fuchsia-500/25'
+      },
+      1: {
+        text: '1',
+        ringColor: '#10b981',
+        textColorClass: 'text-transparent bg-clip-text bg-gradient-to-b from-lime-200 via-emerald-400 to-teal-500 drop-shadow-[0_0_35px_rgba(16,185,129,0.95)] text-7xl sm:text-8xl',
+        glowBgClass: 'bg-emerald-500/25'
+      },
+      0: {
+        text: 'GO',
+        ringColor: '#22c55e',
+        textColorClass: 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-lime-400 to-yellow-300 drop-shadow-[0_0_55px_rgba(34,197,94,1)] text-7xl sm:text-8xl',
+        glowBgClass: 'bg-emerald-500/40'
+      }
+    };
+
+    async function startCasinoCountdown(participant, onComplete) {
+      isModalOpen = true;
+      stopJackpotEffects();
+      stopSlotSpinning();
+
+      if (autoRollTimer) {
+        clearInterval(autoRollTimer);
+        autoRollTimer = null;
+      }
+      if (countdownTimer) {
+        clearTimeout(countdownTimer);
+        countdownTimer = null;
+      }
+
+      const modal = document.getElementById('countdownModal');
+      const contentBox = document.getElementById('countdownContentBox');
+      const textEl = document.getElementById('countText');
+      const ringEl = document.getElementById('countPulseRing');
+      const glowEl = document.getElementById('countAmbientGlow');
+
+      if (!modal || !textEl) return;
+
+      const readyCfg = COUNTDOWN_CONFIG['ready'];
+      textEl.textContent = readyCfg.text;
+      textEl.className = `font-mono font-black tracking-tight ${readyCfg.textColorClass}`;
+      ringEl.style.borderColor = readyCfg.ringColor;
+      ringEl.style.color = readyCfg.ringColor;
+      glowEl.className = `absolute w-80 h-80 rounded-full blur-3xl pointer-events-none transition-all duration-300 ${readyCfg.glowBgClass}`;
+      textEl.classList.remove('count-anim-active', 'roll-bomb-active');
+      if (contentBox) contentBox.classList.remove('bomb-shake-effect');
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      try {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+      } catch (e) {}
+
+      const stepsSequence = ['ready', 3, 2, 1, 0];
+      let stepIndex = 0;
+
+      function renderStep() {
+        const currentStep = stepsSequence[stepIndex];
+        const cfg = COUNTDOWN_CONFIG[currentStep];
+
+        if (currentStep === 'ready') {
+          playReadySound();
+        } else if (typeof currentStep === 'number' && currentStep > 0) {
+          playCountdownBeep(currentStep);
+        } else {
+          playRaceStartSound();
+        }
+
+        textEl.classList.remove('count-anim-active', 'roll-bomb-active');
+        if (contentBox) contentBox.classList.remove('bomb-shake-effect');
+        void textEl.offsetWidth;
+
+        if (ringEl && glowEl && cfg) {
+          ringEl.style.borderColor = cfg.ringColor;
+          ringEl.style.color = cfg.ringColor;
+          glowEl.className = `absolute w-80 h-80 rounded-full blur-3xl pointer-events-none transition-all duration-300 ${cfg.glowBgClass}`;
+        }
+
+        if (currentStep !== 0) {
+          textEl.textContent = cfg.text;
+          textEl.className = `font-mono font-black tracking-tight count-anim-active ${cfg.textColorClass}`;
+
+          stepIndex++;
+          const nextDuration = currentStep === 'ready' ? 850 : 1000;
+          countdownTimer = setTimeout(renderStep, nextDuration);
+        } else {
+          textEl.textContent = cfg.text;
+          textEl.className = `font-mono font-black tracking-tight roll-bomb-active ${cfg.textColorClass}`;
+
+          if (contentBox) {
+            contentBox.classList.add('bomb-shake-effect');
+          }
+
+          countdownTimer = setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (contentBox) contentBox.classList.remove('bomb-shake-effect');
+
+            textEl.textContent = COUNTDOWN_CONFIG['ready'].text;
+            textEl.className = `font-mono font-black tracking-tight ${COUNTDOWN_CONFIG['ready'].textColorClass}`;
+
+            if (onComplete) onComplete();
+          }, 650);
+        }
+      }
+
+      setTimeout(renderStep, 30);
+    }
+
+    let canvas = null;
+    let ctx2d = null;
+    let canvasAnimId = null;
+    let isDrawActive = false;
+    let reels = [];
+    let targetCode = '0000';
+    let sequentialTimeouts = [];
+
+    function clearAllSequentialTimers() {
+      sequentialTimeouts.forEach(t => clearTimeout(t));
+      sequentialTimeouts = [];
+      if (countdownTimer) clearTimeout(countdownTimer);
+    }
+
+    function drawSafeRoundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(x, y, width, height, radius);
+      } else {
+        ctx.rect(x, y, width, height);
+      }
+    }
+
+    function initBallCanvas() {
+      canvas = document.getElementById('lotteryBallCanvas');
+      if (!canvas) return;
+      ctx2d = canvas.getContext('2d');
+
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = canvas.clientWidth || rect.width || 340;
+      const displayHeight = canvas.clientHeight || rect.height || 170;
+
+      canvas.width = Math.round(displayWidth * dpr);
+      canvas.height = Math.round(displayHeight * dpr);
+
+      ctx2d.setTransform(1, 0, 0, 1, 0, 0);
+      ctx2d.scale(dpr, dpr);
+
+      const targetArr = targetCode.split('').map(d => parseInt(d, 10));
+      reels = [];
+      const colWidth = displayWidth / 4;
+
+      for (let i = 0; i < 4; i++) {
+        reels.push({
+          x: i * colWidth + colWidth / 2,
+          yOffset: 0,
+          speed: 36,
+          targetDigit: targetArr[i] !== undefined ? targetArr[i] : 0,
+          currentDisplay: Math.floor(Math.random() * 10),
+          isLocked: false,
+          isRolling: false,
+          shakeX: 0,
+          shakeY: 0
+        });
+      }
+    }
+
+    function drawInitialCanvasFrame() {
+      if (!canvas || !ctx2d) return;
+      const displayWidth = canvas.clientWidth || 340;
+      const displayHeight = canvas.clientHeight || 170;
+
+      ctx2d.clearRect(0, 0, displayWidth, displayHeight);
+      ctx2d.fillStyle = '#090D16';
+      ctx2d.fillRect(0, 0, displayWidth, displayHeight);
+
+      const colWidth = displayWidth / 4;
+      for (let i = 0; i < 4; i++) {
+        const reelLeft = i * colWidth + 4;
+        const reelW = colWidth - 8;
+        const reelTop = 10;
+        const reelH = displayHeight - 20;
+
+        ctx2d.save();
+        const colGrad = ctx2d.createLinearGradient(reelLeft, 0, reelLeft + reelW, 0);
+        colGrad.addColorStop(0, '#111827');
+        colGrad.addColorStop(0.5, '#1E293B');
+        colGrad.addColorStop(1, '#0F172A');
+        ctx2d.fillStyle = colGrad;
+        drawSafeRoundRect(ctx2d, reelLeft, reelTop, reelW, reelH, 12);
+        ctx2d.fill();
+
+        ctx2d.strokeStyle = '#334155';
+        ctx2d.lineWidth = 1;
+        ctx2d.stroke();
+
+        ctx2d.textAlign = 'center';
+        ctx2d.textBaseline = 'middle';
+        ctx2d.font = '900 38px "JetBrains Mono", monospace';
+        ctx2d.fillStyle = '#475569';
+        ctx2d.fillText('-', i * colWidth + colWidth / 2, displayHeight / 2 + 1);
+        ctx2d.restore();
+      }
+    }
+
+    function runSequentialCanvasLoop() {
+      if (!canvas || !ctx2d) return;
+
+      const displayWidth = canvas.clientWidth || 340;
+      const displayHeight = canvas.clientHeight || 170;
+
+      ctx2d.clearRect(0, 0, displayWidth, displayHeight);
+      ctx2d.fillStyle = '#090D16';
+      ctx2d.fillRect(0, 0, displayWidth, displayHeight);
+
+      const colWidth = displayWidth / 4;
+
+      reels.forEach((reel, i) => {
+        if (reel.isRolling && !reel.isLocked) {
+          reel.yOffset += reel.speed;
+          reel.shakeX = (Math.random() - 0.5) * 3;
+          reel.shakeY = (Math.random() - 0.5) * 4;
+
+          if (reel.yOffset >= 50) {
+            reel.yOffset -= 50;
+            reel.currentDisplay = (reel.currentDisplay + 1) % 10;
+          }
+        } else {
+          reel.shakeX = 0;
+          reel.shakeY = 0;
+        }
+
+        const reelLeft = i * colWidth + 4;
+        const reelW = colWidth - 8;
+        const reelTop = 10;
+        const reelH = displayHeight - 20;
+
+        ctx2d.save();
+        const colGrad = ctx2d.createLinearGradient(reelLeft, 0, reelLeft + reelW, 0);
+
+        if (reel.isLocked) {
+          colGrad.addColorStop(0, '#1E293B');
+          colGrad.addColorStop(0.5, '#0F172A');
+          colGrad.addColorStop(1, '#1E293B');
+        } else if (reel.isRolling) {
+          colGrad.addColorStop(0, '#1E1B4B');
+          colGrad.addColorStop(0.5, '#1E293B');
+          colGrad.addColorStop(1, '#1E1B4B');
+        } else {
+          colGrad.addColorStop(0, '#111827');
+          colGrad.addColorStop(0.5, '#1E293B');
+          colGrad.addColorStop(1, '#0F172A');
+        }
+
+        ctx2d.fillStyle = colGrad;
+        drawSafeRoundRect(ctx2d, reelLeft, reelTop, reelW, reelH, 12);
+        ctx2d.fill();
+
+        if (reel.isLocked) {
+          ctx2d.strokeStyle = '#F59E0B';
+          ctx2d.lineWidth = 2.5;
+        } else if (reel.isRolling) {
+          ctx2d.strokeStyle = '#818CF8';
+          ctx2d.lineWidth = 2;
+        } else {
+          ctx2d.strokeStyle = '#334155';
+          ctx2d.lineWidth = 1;
+        }
+        ctx2d.stroke();
+
+        ctx2d.textAlign = 'center';
+        ctx2d.textBaseline = 'middle';
+        ctx2d.font = '900 42px "JetBrains Mono", monospace';
+
+        const drawX = reel.x + reel.shakeX;
+        const drawY = displayHeight / 2 + 1 + reel.shakeY;
+
+        if (reel.isLocked) {
+          ctx2d.fillStyle = '#FFFFFF';
+          ctx2d.shadowColor = 'rgba(245, 158, 11, 0.5)';
+          ctx2d.shadowBlur = 10;
+          ctx2d.fillText(reel.targetDigit.toString(), drawX, drawY);
+        } else if (reel.isRolling) {
+          ctx2d.fillStyle = '#F8FAFC';
+          ctx2d.shadowBlur = 0;
+          ctx2d.fillText(reel.currentDisplay.toString(), drawX, drawY);
+
+          ctx2d.fillStyle = 'rgba(148, 163, 184, 0.25)';
+          const prevDigit = (reel.currentDisplay + 9) % 10;
+          const nextDigit = (reel.currentDisplay + 1) % 10;
+          ctx2d.fillText(prevDigit.toString(), drawX, drawY - 42);
+          ctx2d.fillText(nextDigit.toString(), drawX, drawY + 42);
+        } else {
+          ctx2d.fillStyle = '#475569';
+          ctx2d.shadowBlur = 0;
+          ctx2d.fillText('-', drawX, drawY);
+        }
+
+        ctx2d.restore();
+      });
+
+      const topShadow = ctx2d.createLinearGradient(0, 0, 0, 36);
+      topShadow.addColorStop(0, 'rgba(10, 15, 26, 0.95)');
+      topShadow.addColorStop(1, 'rgba(10, 15, 26, 0)');
+      ctx2d.fillStyle = topShadow;
+      ctx2d.fillRect(0, 0, displayWidth, 36);
+
+      const btmShadow = ctx2d.createLinearGradient(0, displayHeight - 36, 0, displayHeight);
+      btmShadow.addColorStop(0, 'rgba(10, 15, 26, 0)');
+      btmShadow.addColorStop(1, 'rgba(10, 15, 26, 0.95)');
+      ctx2d.fillStyle = btmShadow;
+      ctx2d.fillRect(0, displayHeight - 36, displayWidth, 36);
+
+      if (isDrawActive) {
+        canvasAnimId = requestAnimationFrame(runSequentialCanvasLoop);
+      }
+    }
+
+    function startSequentialRollSequence(digitIndex) {
+      if (!isDrawActive || digitIndex >= 4) {
+        finishDrawSequence();
+        return;
+      }
+
+      const reel = reels[digitIndex];
+      reel.isRolling = true;
+      reel.isLocked = false;
+
+      startScoreCountingAudio();
+
+      const rollDuration = digitIndex === 3 ? 1200 : (digitIndex === 0 ? 950 : 850);
+
+      const lockTimer = setTimeout(() => {
+        if (!isDrawActive) return;
+
+        reel.isRolling = false;
+        reel.isLocked = true;
+        reel.currentDisplay = reel.targetDigit;
+        reel.shakeX = 0;
+        reel.shakeY = 0;
+
+        stopScoreCountingAudio();
+        playDigitLockSound(digitIndex);
+
+        const pauseDelay = digitIndex === 2 ? 500 : 380;
+        const pauseTimer = setTimeout(() => {
+          if (!isDrawActive) return;
+          startSequentialRollSequence(digitIndex + 1);
+        }, pauseDelay);
+
+        sequentialTimeouts.push(pauseTimer);
+      }, rollDuration);
+
+      sequentialTimeouts.push(lockTimer);
+    }
+
+    function openDrawCanvasModal(participant) {
+      isModalOpen = true;
+      clearAllSequentialTimers();
+      stopScoreCountingAudio();
+
+      const modal = document.getElementById('drawCanvasModal');
+      if (!modal) return;
+
+      document.getElementById('drawParticipantName').textContent = participant.name;
+      document.getElementById('drawPositionLabel').textContent = `Jabatan: ${participant.position}`;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      document.getElementById('drawResultSummary').classList.add('hidden');
+
+      currentDrawParticipant = participant;
+      targetCode = participant.code4D;
+      isDrawActive = true;
+
+      // Beri browser waktu singkat untuk kalkulasi dimensi flex sebelum inisialisasi Canvas
+      setTimeout(() => {
+        initBallCanvas();
+        drawInitialCanvasFrame();
+
+        if (canvasAnimId) cancelAnimationFrame(canvasAnimId);
+        canvasAnimId = requestAnimationFrame(runSequentialCanvasLoop);
+
+        const startDelayTimer = setTimeout(() => {
+          if (!isDrawActive) return;
+          startSequentialRollSequence(0);
+        }, 220);
+        sequentialTimeouts.push(startDelayTimer);
+      }, 30);
+    }
+
+    function triggerTestCountdown() {
+      stopJackpotEffects();
+      stopSlotSpinning();
+      const mock = {
+        name: 'Tes Peserta',
+        position: 'SPV',
+        email: 'test.peserta@zentoracore.com',
+        code4D: '2849',
+        date: '2026-09-23 16:30'
+      };
+      startCasinoCountdown(mock, () => {
+        openDrawCanvasModal(mock);
+      });
+    }
+
+    function closeDrawCanvasModal() {
+      isModalOpen = false;
+      isDrawActive = false;
+      clearAllSequentialTimers();
+      stopScoreCountingAudio();
+
+      const modal = document.getElementById('drawCanvasModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      if (canvasAnimId) {
+        cancelAnimationFrame(canvasAnimId);
+        canvasAnimId = null;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+
+      try {
+        if (typeof confetti === 'function' && typeof confetti.reset === 'function') {
+          confetti.reset();
+        }
+      } catch (e) {}
+
+      startAutoRoll();
+    }
+
+    function finishDrawSequence() {
+      isDrawActive = false;
+      stopScoreCountingAudio();
+
+      playWinFanfareSound();
+
+      try {
+        confetti({
+          particleCount: 95,
+          spread: 85,
+          origin: { y: 0.55 }
+        });
+      } catch (err) {}
+
+      if (currentDrawParticipant) {
+        currentDrawParticipant.emailSent = true;
+        saveParticipantsData();
+        sendRealEmailWithEmailJS(currentDrawParticipant);
+
+        const summaryBox = document.getElementById('drawResultSummary');
+        if (summaryBox) {
+          document.getElementById('summary4D').textContent = currentDrawParticipant.code4D;
+          document.getElementById('summaryTimestamp').textContent = currentDrawParticipant.date || '2026-09-23';
+          document.getElementById('summaryEmailTarget').textContent = `dikirim ke: ${currentDrawParticipant.email}`;
+          summaryBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    function generatePosition4D(position) {
+      const master = POSITION_MASTERS[position] || { prefix: '7', min: 7000, max: 7999 };
+      const asDigit = master.prefix;
+      const kop = Math.floor(Math.random() * 10);
+      const kepala = Math.floor(Math.random() * 10);
+      const ekor = Math.floor(Math.random() * 10);
+      return `${asDigit}${kop}${kepala}${ekor}`;
+    }
+
+    function handleRegistration(e) {
+      e.preventDefault();
+
+      if (isModalOpen) return;
+
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+
+      stopJackpotEffects();
+      stopSlotSpinning();
+
+      const name = document.getElementById('regName').value.trim();
+      const position = document.getElementById('regPosition').value;
+      const emailInput = document.getElementById('regEmail');
+      let rawEmail = (emailInput ? emailInput.value : '').trim().toLowerCase();
+
+      if (!name || !position || !rawEmail) {
+        showToast('Validasi Gagal', 'Mohon lengkapi seluruh kolom formulir.');
+        return;
+      }
+
+      // Validasi Domain: otomatis melengkapi @zentoracore.com jika hanya username yang diketik
+      if (!rawEmail.includes('@')) {
+        rawEmail = `${rawEmail}@zentoracore.com`;
+      }
+
+      if (!rawEmail.endsWith('@zentoracore.com')) {
+        showToast('Email Ditolak', 'Wajib menggunakan alamat email resmi kantor @zentoracore.com');
+        return;
+      }
+
+      const isExist = participants.some(p => p.email.toLowerCase() === rawEmail);
+      if (isExist) {
+        showToast('Email Terdaftar', `Email ${rawEmail} sudah pernah mendaftar.`);
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'pointer-events-none');
+      }
+
+      warmUpAudio();
+
+      let code4D = generatePosition4D(position);
+      while (participants.some(p => p.code4D === code4D)) {
+        code4D = generatePosition4D(position);
+      }
+
+      const now = new Date();
+      const dateStr = now.getFullYear() + '-' + 
+                      String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                      String(now.getDate()).padStart(2, '0') + ' ' + 
+                      String(now.getHours()).padStart(2, '0') + ':' + 
+                      String(now.getMinutes()).padStart(2, '0');
+
+      const newParticipant = {
+        id: Date.now().toString(),
+        name: name,
+        position: position,
+        email: rawEmail,
+        date: dateStr,
+        code4D: code4D,
+        emailSent: false
+      };
+
+      participants.unshift(newParticipant);
+      saveParticipantsData();
+
+      // Siarkan seketika (realtime zero-latency) ke Panel Admin yang sedang terbuka
+      broadcastNewParticipant(newParticipant);
+
+      // Sinkronisasi otomatis ke backend REST API server jika aktif
+      syncToBackendServer(newParticipant);
+
+      document.getElementById('registrationForm').reset();
+
+      startCasinoCountdown(newParticipant, () => {
+        openDrawCanvasModal(newParticipant);
+      });
+    }
+
+    // Fungsi broadcast data langsung ke Panel Admin
+    function broadcastNewParticipant(participant) {
+      try {
+        if ('BroadcastChannel' in window) {
+          const channel = new BroadcastChannel('zentora_sync_channel');
+          channel.postMessage({ type: 'NEW_REGISTRATION', participant: participant });
+          channel.close();
+        }
+      } catch (err) {}
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadParticipantsData();
+      initEmailJS();
+
+      const reel1 = document.getElementById('reel1');
+      const reel2 = document.getElementById('reel2');
+      const reel3 = document.getElementById('reel3');
+      if (reel1 && reel2 && reel3) {
+        reel1.innerHTML = SYMBOL_SVGS.seven;
+        reel2.innerHTML = SYMBOL_SVGS.seven;
+        reel3.innerHTML = SYMBOL_SVGS.seven;
+      }
+
+      startAutoRoll();
+    });
+
+    window.addEventListener('resize', () => {
+      if (canvas && isModalOpen) {
+        initBallCanvas();
+        if (!isDrawActive) {
+          drawInitialCanvasFrame();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
