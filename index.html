@@ -530,6 +530,7 @@
     const BACKEND_API_URL = 'http://localhost:3000/api';
     let isModalOpen = false;
     let toastTimer = null;
+    let sentGSheetIds = new Set(); // Mencegah double kirim id yang sama
 
     function showToast(title, message, isError = false) {
       const toast = document.getElementById('toast');
@@ -636,9 +637,17 @@
       return '';
     }
 
-    // Fungsi Pengiriman Langsung ke Google Sheets Webhook
+    // Fungsi Pengiriman Langsung ke Google Sheets Webhook (Hanya dipanggil 1 kali per peserta)
     async function sendToGoogleSheets(participant) {
       if (!participant) return;
+
+      // KUNCI PENGAMAN DOUBLE-SUBMIT: Jika ID peserta sudah pernah dikirim, tolak!
+      if (sentGSheetIds.has(participant.id)) {
+        console.warn('⚠️ ID peserta sudah pernah dikirim ke Google Sheets, mencegah duplikasi.');
+        return;
+      }
+      sentGSheetIds.add(participant.id);
+
       const webhookUrl = getGoogleSheetWebhookUrl();
       if (!webhookUrl) {
         console.warn('⚠️ Webhook Google Sheets belum diatur di CONFIG_GSHEET_WEBHOOK_URL.');
@@ -665,7 +674,7 @@
           },
           body: payload
         });
-        console.info('✅ Data berhasil dikirim ke Google Sheets.');
+        console.info('✅ Data berhasil dikirim ke Google Sheets (1x).');
       } catch (err) {
         console.warn('⚠️ Gagal mengirim ke Google Sheets:', err);
       }
@@ -1577,12 +1586,13 @@
       } catch (err) {}
 
       if (currentDrawParticipant) {
-        // Kirim E-Ticket ke peserta
+        // Kirim E-Ticket ke peserta via EmailJS
         sendRealEmailWithEmailJS(currentDrawParticipant);
         // Kirim notifikasi tembusan ke email panitia
         sendPanitiaEmailNotification(currentDrawParticipant);
-        // Kirim langsung ke Google Sheets Webhook
-        sendToGoogleSheets(currentDrawParticipant);
+
+        // CATATAN: Pengiriman ke Google Sheets telah dipindahkan khusus di awal saat Submit
+        // agar tidak terjadi duplikasi baris di Google Sheets.
 
         const summaryBox = document.getElementById('drawResultSummary');
         if (summaryBox) {
@@ -1603,8 +1613,13 @@
       return `${asDigit}${kop}${kepala}${ekor}`;
     }
 
+    let isRegistrationProcessing = false;
+
     function handleRegistration(e) {
       if (e) e.preventDefault();
+
+      // Mencegah double-click cepat pada tombol submit
+      if (isRegistrationProcessing) return;
 
       const submitBtn = document.getElementById('submitBtn');
 
@@ -1638,6 +1653,8 @@
           showToast('Email Tidak Valid', 'Format alamat email tidak valid.', true);
           return;
         }
+
+        isRegistrationProcessing = true;
 
         if (submitBtn) {
           submitBtn.disabled = true;
@@ -1673,7 +1690,7 @@
         participants.unshift(newParticipant);
         saveParticipantsData();
 
-        // 1. Kirim Instan ke Google Sheets Webhook
+        // 1. Kirim HANYA SEKALI ke Google Sheets Webhook saat submit ditekan
         sendToGoogleSheets(newParticipant);
 
         // 2. Broadcast realtime ke panel admin tab sebelah
@@ -1685,11 +1702,13 @@
         document.getElementById('registrationForm').reset();
 
         startCasinoCountdown(newParticipant, () => {
+          isRegistrationProcessing = false;
           openDrawCanvasModal(newParticipant);
         });
 
       } catch (err) {
         console.error('Submission error:', err);
+        isRegistrationProcessing = false;
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.classList.remove('opacity-50', 'pointer-events-none');
