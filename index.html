@@ -266,7 +266,7 @@
 
                     <g class="sunburst-animated" opacity="0.85">
                       <line x1="230" y1="110" x2="230" y2="-40" stroke="#FDE047" stroke-width="6" stroke-linecap="round" opacity="0.75" filter="url(#goldNeonGlow)" />
-                      <line x1="230" y1="110" x2="110" y2="-20" stroke="#F59E0B" stroke-width="4.5" stroke-linecap="round" opacity="0.65" />
+                      <line x1="230" y1="110" x2="230" y2="-20" stroke="#F59E0B" stroke-width="4.5" stroke-linecap="round" opacity="0.65" />
                       <line x1="230" y1="110" x2="350" y2="-20" stroke="#F59E0B" stroke-width="4.5" stroke-linecap="round" opacity="0.65" />
                       <line x1="230" y1="110" x2="40" y2="40" stroke="#FACC15" stroke-width="5" stroke-linecap="round" opacity="0.7" />
                       <line x1="230" y1="110" x2="420" y2="40" stroke="#FACC15" stroke-width="5" stroke-linecap="round" opacity="0.7" />
@@ -502,6 +502,13 @@
   </div>
 
   <script>
+    // ===========================================================================
+    // KONFIGURASI PENTING UNTUK GITHUB PAGES / AKSES PUBLIK
+    // Jika Anda memakai GitHub Pages, tempel URL Webhook Google Sheets Anda di sini:
+    // Contoh: const CONFIG_GSHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
+    // ===========================================================================
+    const CONFIG_GSHEET_WEBHOOK_URL = '';
+
     const POSITION_MASTERS = {
       'Head': { prefix: '1', min: 1000, max: 1999, label: 'Head' },
       'SPV': { prefix: '2', min: 2000, max: 2999, label: 'SPV' },
@@ -524,7 +531,6 @@
     let isModalOpen = false;
     let toastTimer = null;
 
-    // Fungsi notifikasi toast sistem
     function showToast(title, message, isError = false) {
       const toast = document.getElementById('toast');
       const toastTitle = document.getElementById('toastTitle');
@@ -554,7 +560,7 @@
           body: JSON.stringify(participant)
         });
       } catch (err) {
-        console.info('ℹ️ Server backend offline, data tersimpan di penyimpanan lokal browser.');
+        // Fallback hening jika server lokal belum aktif
       }
     }
 
@@ -607,6 +613,64 @@
       }
     }
 
+    // Mendapatkan URL Webhook Google Sheets dari kode tetap atau penyimpanan browser
+    function getGoogleSheetWebhookUrl() {
+      // Prioritas 1: Gunakan URL tetap dari skrip (Bekerja sempurna di GitHub Pages/HP)
+      if (typeof CONFIG_GSHEET_WEBHOOK_URL === 'string' && CONFIG_GSHEET_WEBHOOK_URL.trim().startsWith('http')) {
+        return CONFIG_GSHEET_WEBHOOK_URL.trim();
+      }
+
+      // Prioritas 2: Gunakan URL dari localStorage jika ada
+      try {
+        const direct = localStorage.getItem('zentora_gsheet_webhook');
+        if (direct && direct.startsWith('http')) return direct.trim();
+
+        const rawSettings = localStorage.getItem('zentora_integration_settings');
+        if (rawSettings) {
+          const parsed = JSON.parse(rawSettings);
+          if (parsed && parsed.googleSheetWebhook && parsed.googleSheetWebhook.startsWith('http')) {
+            return parsed.googleSheetWebhook.trim();
+          }
+        }
+      } catch (err) {}
+      return '';
+    }
+
+    // Fungsi Pengiriman Langsung ke Google Sheets Webhook
+    async function sendToGoogleSheets(participant) {
+      if (!participant) return;
+      const webhookUrl = getGoogleSheetWebhookUrl();
+      if (!webhookUrl) {
+        console.warn('⚠️ Webhook Google Sheets belum diatur di CONFIG_GSHEET_WEBHOOK_URL.');
+        return;
+      }
+
+      try {
+        const payload = JSON.stringify({
+          name: participant.name,
+          position: participant.position,
+          email: participant.email,
+          code4D: participant.code4D || participant.unique_code,
+          unique_code: participant.code4D || participant.unique_code,
+          code: participant.code4D || participant.unique_code,
+          date: participant.date || new Date().toISOString()
+        });
+
+        // Mode no-cors dengan text/plain agar tidak diblokir browser di domain publik
+        await fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: payload
+        });
+        console.info('✅ Data berhasil dikirim ke Google Sheets.');
+      } catch (err) {
+        console.warn('⚠️ Gagal mengirim ke Google Sheets:', err);
+      }
+    }
+
     async function sendRealEmailWithEmailJS(participant) {
       if (!participant) return;
       loadEmailJSConfig();
@@ -635,6 +699,27 @@
       } catch (error) {
         console.warn('Gagal kirim via EmailJS:', error);
       }
+    }
+
+    async function sendPanitiaEmailNotification(participant) {
+      try {
+        const rawSettings = localStorage.getItem('zentora_integration_settings');
+        if (!rawSettings) return;
+        const settings = JSON.parse(rawSettings);
+
+        if (settings.adminEmail && typeof emailjs !== 'undefined' && emailjsConfig.publicKey && emailjsConfig.serviceId) {
+          const adminParams = {
+            to_name: 'Panitia Doorprize',
+            to_email: settings.adminEmail,
+            position: participant.position,
+            unique_code: participant.code4D,
+            code: participant.code4D,
+            register_date: participant.date,
+            notes: `Pendaftar Baru: ${participant.name} (${participant.position}) - Email: ${participant.email}`
+          };
+          emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, adminParams).catch(() => {});
+        }
+      } catch (err) {}
     }
 
     let audioCtx = null;
@@ -1492,9 +1577,12 @@
       } catch (err) {}
 
       if (currentDrawParticipant) {
-        currentDrawParticipant.emailSent = true;
-        saveParticipantsData();
+        // Kirim E-Ticket ke peserta
         sendRealEmailWithEmailJS(currentDrawParticipant);
+        // Kirim notifikasi tembusan ke email panitia
+        sendPanitiaEmailNotification(currentDrawParticipant);
+        // Kirim langsung ke Google Sheets Webhook
+        sendToGoogleSheets(currentDrawParticipant);
 
         const summaryBox = document.getElementById('drawResultSummary');
         if (summaryBox) {
@@ -1541,19 +1629,15 @@
           return;
         }
 
-        // Jika peserta hanya mengetik username tanpa domain, lengkapi otomatis dengan @zentoracore.com
         if (!rawEmail.includes('@')) {
           rawEmail = `${rawEmail}@zentoracore.com`;
         }
 
-        // Validasi format email umum
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(rawEmail)) {
           showToast('Email Tidak Valid', 'Format alamat email tidak valid.', true);
           return;
         }
-
-        // Catatan: Pengecekan duplikasi email dilepas agar bisa mendaftar berkali-kali
 
         if (submitBtn) {
           submitBtn.disabled = true;
@@ -1589,10 +1673,13 @@
         participants.unshift(newParticipant);
         saveParticipantsData();
 
-        // Broadcast realtime ke panel admin jika terbuka di tab/jendela lain
+        // 1. Kirim Instan ke Google Sheets Webhook
+        sendToGoogleSheets(newParticipant);
+
+        // 2. Broadcast realtime ke panel admin tab sebelah
         broadcastNewParticipant(newParticipant);
 
-        // Sinkronisasi ke backend server Node.js jika aktif
+        // 3. Sinkronisasi ke backend server Node.js jika aktif
         syncToBackendServer(newParticipant);
 
         document.getElementById('registrationForm').reset();
